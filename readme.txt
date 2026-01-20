@@ -1,0 +1,1 @@
+powershell -ExecutionPolicy Bypass -File create_autostart_windows.ps1

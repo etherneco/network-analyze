@@ -1,40 +1,37 @@
 # Network Analyze
 
-## Overview
-Network Analyze is a practical network discovery and analysis toolkit designed for real-world, multi-host environments.
+## Executive Summary
+Network Analyze is a practical toolkit for visibility and control in multi-host networks. It connects live system metrics, network discovery, and lightweight remote actions into a single operational view. The focus is real infrastructure: mixed OS fleets, long-running services, and multiple subnets.
 
-The project focuses on **understanding, visibility and structure of local networks**, especially in setups that are long-running, virtualised and heterogeneous rather than clean, short-lived labs.
+## What It Solves
+- Consolidates host status, resource usage, and network context in one place.
+- Reduces manual steps when you need to identify the active host and react fast.
+- Adds structure to noisy network data by enriching it with DHCP and host metadata.
 
-It is built from real operational needs, not as a theoretical network scanner.
+## Key Capabilities
+- Live system metrics from agents (CPU, memory, disks, top processes).
+- Screenshot capture for quick visual confirmation of active screens.
+- Network discovery using DHCP lease parsing plus subnet scans.
+- Remote command dispatch from a central dashboard.
+- Global hotkey to send a minimal context payload to an analyzer service.
 
----
+## Architecture Overview
+- `metrix_server.py`: lightweight agent (Flask) exposing metrics, screenshots, command execution, clipboard, and hotkey trigger.
+- `dashboard/`: PyQt6 desktop dashboard for live monitoring and control.
+- `scan/`: Flask app for subnet discovery, DHCP-aware hostname resolution, and host registration.
+- `run.py`: minimal helper that forwards Barrier state to the analyzer.
 
-## Context
-The project originated from a working environment that includes:
-- Proxmox as a central virtualisation platform
-- multiple physical hosts and virtual machines
-- mixed operating systems (Linux, Windows Server via RDP)
-- several active subnets (e.g. `10.x`, `192.168.x`)
-- multi-host workflows supported by tools such as Barrier
+## Configuration
+- All runtime settings are in `.env` (URLs, ports, timeouts, scan ranges, DHCP paths).
+- A sample template is provided in `.env.example`.
+- Sensitive values (e.g. registration password) belong in `.env` only.
 
-In such environments, it quickly becomes difficult to answer simple questions:
-- what hosts are actually alive
-- which network they belong to
-- how they relate to each other
-- which machines matter for daily work
+## Why This Is Useful in Production
+- Designed for hybrid environments (VMs + physical hosts + mixed OS).
+- Focused on operational visibility and faster incident response.
+- Minimal dependencies; deployable as a small agent + dashboard.
 
----
-
-## Problem Statement
-Traditional network tools tend to provide:
-- raw scan results
-- flat lists of IP addresses
-- limited contextual information
-
-This is often insufficient for environments that evolve over time and are actively used for development, testing and operations.
-
-Network Analyze aims to add **context and structure**, not just data.
-
----
-
-## Core Concept
+## Tech Stack
+- Python, Flask, PyQt6
+- psutil, requests, mss, Pillow
+- Optional: nmap on hosts running `scan/`

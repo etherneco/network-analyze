@@ -1,0 +1,1 @@
+test="cat date > /home/daniel/data.commander"

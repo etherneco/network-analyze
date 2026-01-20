@@ -1,0 +1,10 @@
+flask
+requests
+psutil
+mss
+pillow
+pystray
+pyperclip
+keyboard
+pyautogui
+python-dotenv

@@ -1,0 +1,1 @@
+Open Chrome="google-chrome https://google.com"

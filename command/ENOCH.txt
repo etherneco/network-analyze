@@ -1,0 +1,2 @@
+Notepad="notepad.exe"
+Ping Google="ping google.com -t"

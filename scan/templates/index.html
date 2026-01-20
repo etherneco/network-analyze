@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Network Overview</title>
+
+<style>
+    body {
+        margin: 0;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+        background: #0b0f14;
+        color: #f0f3f6;
+        font-size: 24px; /* VERY LARGE BASE */
+    }
+
+    .dashboard {
+        display: grid;
+        grid-template-rows: auto 1fr;
+        gap: 28px;
+        padding: 32px;
+        height: 100vh;
+        box-sizing: border-box;
+    }
+
+    /* TOP BAR */
+    .top-bar {
+        background: #111827;
+        border-radius: 18px;
+        padding: 24px 32px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .top-bar h1 {
+        margin: 0;
+        font-size: 2.4rem;
+        letter-spacing: 1px;
+    }
+
+    button {
+        padding: 20px 36px;
+        border: none;
+        border-radius: 14px;
+        background: #16a34a;
+        color: #ffffff;
+        font-size: 1.6rem;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    button:active {
+        transform: scale(0.97);
+    }
+
+    .loader {
+        width: 22px;
+        height: 22px;
+        border: 4px solid #ffffff;
+        border-top-color: transparent;
+        border-radius: 50%;
+        display: none;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    /* MAIN CONTENT */
+    .content {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 32px;
+        overflow: hidden;
+    }
+
+    .box {
+        position: relative;
+        border-radius: 22px;
+        padding: 28px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        background-size: cover;
+        background-position: center;
+    }
+
+    .box::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: rgba(10, 14, 20, 0.82);
+        backdrop-filter: blur(2px);
+    }
+
+    .box > * {
+        position: relative;
+        z-index: 1;
+    }
+
+    .box.online-bg {
+        background-image: url("https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=1600&q=80");
+    }
+
+    .box.offline-bg {
+        background-image: url("https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1600&q=80");
+    }
+
+    .box h2 {
+        margin: 0 0 20px 0;
+        font-size: 2rem;
+        letter-spacing: 0.8px;
+    }
+
+    .hosts {
+        overflow-y: auto;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 22px;
+    }
+
+    .host-tile {
+        background: rgba(13, 17, 23, 0.92);
+        border-radius: 18px;
+        padding: 22px 24px;
+        font-size: 1.4rem;
+        border-left: 8px solid transparent;
+        line-height: 1.5;
+    }
+
+    .host-tile.online {
+        border-color: #22c55e;
+    }
+
+    .host-tile.offline {
+        border-color: #ef4444;
+        opacity: 0.7;
+    }
+
+    .host-tile strong {
+        font-size: 1.6rem;
+        display: block;
+        margin-bottom: 10px;
+    }
+
+    .ip {
+        color: #9ca3af;
+        font-size: 1.25rem;
+        margin-bottom: 6px;
+    }
+
+    @media (max-width: 1400px) {
+        .content {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+</head>
+
+<body>
+<div class="dashboard">
+
+    <!-- TOP BAR -->
+    <div class="top-bar">
+        <h1>Network</h1>
+        <button onclick="loadHosts()">
+            Refresh
+            <span class="loader" id="loader"></span>
+        </button>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+        <!-- ONLINE -->
+        <div class="box online-bg">
+            <h2>Online Hosts</h2>
+            <div class="hosts" id="online-hosts"></div>
+        </div>
+
+        <!-- OFFLINE -->
+        <div class="box offline-bg">
+            <h2>Offline Hosts</h2>
+            <div class="hosts" id="offline-hosts"></div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+let cache = {};
+
+function renderHost(host) {
+    return `
+        <div class="host-tile ${host.status}">
+            <strong>${host.hostname}</strong>
+            <div class="ip">${host.ip}</div>
+            <div>${host.mac || 'N/A'}</div>
+        </div>
+    `;
+}
+
+function loadHosts() {
+    const loader = document.getElementById('loader');
+    loader.style.display = 'inline-block';
+
+    fetch('/api/hosts')
+        .then(r => r.json())
+        .then(data => {
+            if (!Array.isArray(data.hosts)) return;
+
+            data.hosts.forEach(h => cache[h.ip] = h);
+
+            const online = [];
+            const offline = [];
+
+            Object.values(cache).forEach(host => {
+                if (host.status === 'online') online.push(renderHost(host));
+                else offline.push(renderHost(host));
+            });
+
+            document.getElementById('online-hosts').innerHTML = online.join('');
+            document.getElementById('offline-hosts').innerHTML = offline.join('');
+
+            loader.style.display = 'none';
+        })
+        .catch(() => {
+            loader.style.display = 'none';
+        });
+}
+
+loadHosts();
+setInterval(loadHosts, 60000);
+
+const bgSeed = Date.now();
+
+document.querySelector('.online-bg').style.backgroundImage =
+  `url("https://picsum.photos/1920/1080?random=${bgSeed}")`;
+
+document.querySelector('.offline-bg').style.backgroundImage =
+  `url("https://picsum.photos/1920/1080?random=${bgSeed+1}")`;
+
+</script>
+</body>
+</html>
